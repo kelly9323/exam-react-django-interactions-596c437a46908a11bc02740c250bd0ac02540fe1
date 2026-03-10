@@ -17,7 +17,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 
-from backend.api.views import railway_test
+from api.views import railway_test
 
 urlpatterns = [
     path('admin/', admin.site.urls),
