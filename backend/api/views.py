@@ -1,4 +1,6 @@
 # views.py
+from django.http import JsonResponse
+
 from rest_framework import viewsets
 from .models import Category, ListItem
 from .serializers import CategorySerializer, ListItemSerializer
@@ -18,3 +20,8 @@ class ListItemViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(category__id=category_id)
             
         return queryset
+    
+
+def railway_test(request):
+    """Une vue simple pour valider le déploiement sur Railway."""
+    return JsonResponse({"message": "API déployée avec succès sur Railway !"})
