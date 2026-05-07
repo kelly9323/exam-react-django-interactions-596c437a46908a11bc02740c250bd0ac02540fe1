@@ -9,17 +9,16 @@ import {
   updateTask,
 } from "../api/api";
 import axios from "axios";
+import { TaskItem } from "./TaskItem";
+import { AddTaskForm } from "./AddTaskForm";
 
 export function ToDoList() {
-  const [task, setTask] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [newCategory, setNewCategory] = useState("");
-  // add default category
   const [categoryList, setCategoryList] = useState<Category[]>([]);
   const [taskList, setTaskList] = useState<Task[]>([]);
   const [selectedFilterCategory, setSelectedFilterCategory] = useState("");
-  const [taskCategory, setTaskCategory] = useState("");
 
   useEffect(() => {
     const fetchData = async () => {
@@ -75,26 +74,16 @@ export function ToDoList() {
     }
   };
 
-  const handleAddTask = async () => {
+  const handleAddTask = async (description: string, categoryId: number) => {
     setError(null);
-    if (!task.trim()) {
-      setError("Task description is required.");
-      return;
-    }
-    if (!taskCategory) {
-      setError("Please select a category.");
-      return;
-    }
     try {
-      const newTask = await createTask(task, Number(taskCategory));
+      const newTask = await createTask(description, categoryId);
       if (
         !selectedFilterCategory ||
         selectedFilterCategory === String(newTask.category)
       ) {
         setTaskList([...taskList, newTask]);
       }
-      setTask("");
-      setTaskCategory("");
     } catch (error) {
       const msg = getErrorMessage(
         error,
@@ -130,13 +119,8 @@ export function ToDoList() {
     } catch (error) {
       const msg = getErrorMessage(error, "Failed to load tasks.");
       setError(msg);
-      console.error(error);
     }
   };
-
-  // const filteredTasks = selectedFilterCategory
-  //   ? taskList.filter((t) => t.category_name === selectedFilterCategory)
-  //   : taskList;
 
   const getErrorMessage = (error: unknown, defaultMessage: string): string => {
     if (axios.isAxiosError(error)) {
@@ -154,10 +138,8 @@ export function ToDoList() {
 
   return (
     <>
-      {/* error display */}
       {error && <p style={{ color: "red" }}>{error}</p>}
 
-      {/* create category */}
       <div style={{ display: "flex" }}>
         <input
           value={newCategory}
@@ -168,29 +150,8 @@ export function ToDoList() {
         <button onClick={handleAddCategory}>Add Category</button>
       </div>
 
-      {/* create task */}
-      <div style={{ marginTop: "1em", display: "flex" }}>
-        <input
-          type="text"
-          placeholder="Add new task"
-          value={task}
-          onChange={(e) => setTask(e.target.value)}
-        />
-        <select
-          value={taskCategory}
-          onChange={(e) => setTaskCategory(e.target.value)}
-        >
-          <option value="">Select category</option>
-          {categoryList.map((option) => (
-            <option key={option.id} value={option.id}>
-              {option.name}
-            </option>
-          ))}
-        </select>
-        <button onClick={handleAddTask}>Add Task</button>
-      </div>
+      <AddTaskForm categories={categoryList} onSubmit={handleAddTask} />
 
-      {/* filter dropdown */}
       <div style={{ marginTop: "1em" }}>
         <label htmlFor="category-filter">Filter by category: </label>
         <select
@@ -207,8 +168,6 @@ export function ToDoList() {
         </select>
       </div>
 
-      {/* to do list */}
-
       <div style={{ marginTop: "1em" }}>
         {isLoading ? (
           <p>Loading tasks...</p>
@@ -217,27 +176,12 @@ export function ToDoList() {
         ) : (
           <ul>
             {taskList.map((task) => (
-              <li key={task.id}>
-                <input
-                  id={`task-${task.id}`}
-                  type="checkbox"
-                  checked={task.is_completed}
-                  onChange={() =>
-                    handleToggleStatus(task.id, task.is_completed)
-                  }
-                />
-                <label
-                  htmlFor={`task-${task.id}`}
-                  style={{
-                    textDecoration: task.is_completed ? "line-through" : "none",
-                  }}
-                >
-                  {task.description} ({task.category_name})
-                </label>
-                <button onClick={() => handleDeleteTask(task.id)}>
-                  Delete
-                </button>
-              </li>
+              <TaskItem
+                key={task.id}
+                task={task}
+                onDelete={handleDeleteTask}
+                onToggle={handleToggleStatus}
+              />
             ))}
           </ul>
         )}
